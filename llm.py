@@ -1,6 +1,7 @@
 from openai import OpenAI
-
+#对话类，使用message传递对话内容，使用OpenAI API进行对话,num_rounds为对话轮数，每次对话双方内容都会存储在messages列表中
 class Conversation:
+    #初始化，确定模型，发送初始prompt
     def __init__(self,model,prompt,num_rounds=3):
         self.num_rounds = num_rounds
         self.client = OpenAI(api_key="sk-lcjxpijtmznhqojajxzespzrudcyrzadosrcvcsphzfdtbpe", 
@@ -42,5 +43,6 @@ if __name__ == '__main__':
     promt = "你是一个会回答问题的人工智能"
     model = 'Qwen/Qwen2.5-7B-Instruct'
     conversation = Conversation(model,promt)
+    conversation.ask("你是谁？")#测试模型选择正确
     conversation.ask("1+1=？")
-    conversation.ask("我的第一个问题是什么？")
+    conversation.ask("我的上一个问题是什么？")#测试本地对话保存
