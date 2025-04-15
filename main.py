@@ -15,6 +15,7 @@ class Conversation:
         self.num_rounds = max_num_rounds
         self.client = OpenAI(api_key=self.APIkey, base_url=self.BaseUrl)
         self.model = model
+        self.all_mess={'Pro/Qwen/Qwen2.5-VL-7B-Instruct':[], 'THUDM/chatglm3-6b':[], 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B':[], 'THUDM/glm-4-9b-chat':[]}
         self.messages = []
         self.messages.append({'role': 'system', 'content': prompt})
         response = self.client.chat.completions.create(
@@ -24,7 +25,8 @@ class Conversation:
         )
 
     def switch_model(self, new_model):
-        self.messages = []
+        self.all_mess[self.model] = self.messages
+        self.messages = self.all_mess[new_model]
         self.model = new_model
         return []
 
@@ -36,11 +38,7 @@ class Conversation:
           - temp: 模型的温度参数。温度用于控制聊天机器人的输出。温度越高，响应越具创造性。
         """
         try:
-            messages = []
-            for input_text, response_text in chatbot:
-                messages.append({'role': 'user', 'content': input_text})
-                messages.append({'role': 'assistant', 'content': response_text})
-
+            messages = self.messages
             messages.append({'role': 'user', 'content': user_input})
 
             response = self.client.chat.completions.create(
@@ -48,7 +46,9 @@ class Conversation:
                 messages=messages,  # 包含用户的输入和对话历史
                 temperature=temp,  # 使用温度参数控制创造性
             )
+            messages.append({'role':'assistant', 'content': response.choices[0].message.content})
             chatbot.append((user_input, response.choices[0].message.content))
+            self.messages = messages
 
         except Exception as e:
             print(f"发生错误：{e}")
@@ -56,6 +56,10 @@ class Conversation:
         return chatbot, ""
 
     def reset(self):
+        self.all_mess['Pro/Qwen/Qwen2.5-VL-7B-Instruct'] = []
+        self.all_mess['THUDM/chatglm3-6b'] = []
+        self.all_mess['deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'] = []
+        self.all_mess['THUDM/glm-4-9b-chat'] = []
         self.messages = []
         return []
 
@@ -65,7 +69,10 @@ class Conversation:
           - model: 选择的模型
           - messages: 对话记录
         """
-        target = {"model": self.model,  "description": description}
+        target = [{"model": 'Qwen2.5-VL-7B-Instruct',  "description": self.all_mess['Pro/Qwen/Qwen2.5-VL-7B-Instruct']},
+                  {"model": 'chatglm3-6b', "description": self.all_mess['THUDM/chatglm3-6b']},
+                  {"model": 'DeepSeek-R1-Distill-Qwen-7B', "description": self.all_mess['deepseek-ai/DeepSeek-R1-Distill-Qwen-7B']},
+                  {"model": 'glm-4-9b-chat', "description": self.all_mess['THUDM/glm-4-9b-chat']}]
         file_path = 'files/dialogue_history.json'
         directory = os.path.dirname(file_path)
         if not os.path.exists(directory):
@@ -84,7 +91,7 @@ if __name__ == '__main__':
     prompt_for_dialogue = "你是一个有用的AI助手，接下来请回答我的问题"
 
     model1 = 'Pro/Qwen/Qwen2.5-VL-7B-Instruct'
-    model2 = 'deepseek-ai/DeepSeek-V3'
+    model2 = 'THUDM/chatglm3-6b'
     model3 = 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B'
     model4 = 'THUDM/glm-4-9b-chat'
 
